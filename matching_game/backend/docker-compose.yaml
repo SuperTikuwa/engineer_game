@@ -1,0 +1,20 @@
+version: '3.7'
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: matching_db
+    environment:
+      - MYSQL_ROOT_PASSWORD=root-secret
+      - MYSQL_DATABASE=matching.db
+      - MYSQL_USER=golang
+      - MYSQL_PASSWORD=my-secret-pw
+
+  golang:
+    image: golang:alpine
+    ports:
+      - 8080:80
+    working_dir: /app
+    volumes:
+      - ./src:/app
+    command: '/bin/sh'
+    tty: true
