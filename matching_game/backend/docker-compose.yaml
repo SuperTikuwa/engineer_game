@@ -8,6 +8,8 @@ services:
       - MYSQL_DATABASE=matching.db
       - MYSQL_USER=golang
       - MYSQL_PASSWORD=my-secret-pw
+    ports:
+      - 33061:3306
 
   golang:
     image: golang:alpine
