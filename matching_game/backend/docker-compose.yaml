@@ -12,11 +12,11 @@ services:
       - 33061:3306
 
   golang:
-    image: golang:alpine
+    build:
+      context: ./docker/go
+      dockerfile: Dockerfile
     ports:
       - 8080:80
     working_dir: /app
     volumes:
       - ./src:/app
-    command: '/bin/sh'
-    tty: true

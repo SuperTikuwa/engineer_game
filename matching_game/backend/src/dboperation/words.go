@@ -16,8 +16,8 @@ func SelectWords(mode string) {
 	db := GormConnect()
 	defer closeDB(db)
 
-	words := []models.Words{}
-	db.Model(&models.Words{}).Order("NEWID()").Limit(10).Find(&words)
+	words := []models.Word{}
+	db.Model(&models.Word{}).Order("NEWID()").Limit(10).Find(&words)
 
 	fmt.Println(words)
 

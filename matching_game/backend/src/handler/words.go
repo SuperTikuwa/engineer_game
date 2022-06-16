@@ -7,5 +7,5 @@ import (
 )
 
 func WordsGetHandler(w http.ResponseWriter, r *http.Request) {
-	dboperation.SelectWords("")
+	dboperation.SelectWords(dboperation.STUDENT)
 }

@@ -2,11 +2,20 @@ package sheetclient
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
-	"io/ioutil"
+	"os"
 
-	google "golang.org/x/oauth2/google"
+	"github.com/SuperTikuwa/matching_game/models"
+	"google.golang.org/api/option"
 	sheets "google.golang.org/api/sheets/v4"
+)
+
+const (
+	STUDENT      = "就活生向け"
+	NON_ENGINEER = "非エンジニア職種向け"
+	ENGINEER     = "エンジニア目指す子"
 )
 
 type SheetClient struct {
@@ -15,16 +24,9 @@ type SheetClient struct {
 }
 
 func NewSheetClient(ctx context.Context, spreadsheetID string) (*SheetClient, error) {
-	b, err := ioutil.ReadFile("secret.json")
-	if err != nil {
-		return nil, err
-	}
+	credential := option.WithCredentialsFile("secret.json")
 
-	jwt, err := google.JWTConfigFromJSON(b, "https://www.googleapis.com/auth/spreadsheets")
-	if err != nil {
-		return nil, err
-	}
-	srv, err := sheets.New(jwt.Client(ctx))
+	srv, err := sheets.NewService(ctx, credential)
 	if err != nil {
 		return nil, err
 	}
@@ -34,23 +36,51 @@ func NewSheetClient(ctx context.Context, spreadsheetID string) (*SheetClient, er
 	}, nil
 }
 
-func (s *SheetClient) Get(range_ string) ([][]interface{}, error) {
+func (s *SheetClient) Get(range_ string) ([]models.Word, error) {
 	resp, err := s.srv.Spreadsheets.Values.Get(s.spreadsheetID, range_).Do()
 	if err != nil {
 		return nil, err
 	}
-	return resp.Values, nil
+
+	var words []models.Word
+	for i, row := range resp.Values {
+		if i == 0 {
+			continue
+		}
+		word := models.Word{
+			Word:    row[0].(string),
+			Meaning: row[1].(string),
+		}
+
+		words = append(words, word)
+	}
+
+	return words, nil
 }
 
-func (s *SheetClient) PrintValue() {
-	values, err := s.Get("'就活生向け'!A:B")
+func (s *SheetClient) PrintValue(sheet string) {
+	values, err := s.Get(fmt.Sprintf("'%s'!A:B", sheet))
 	if err != nil {
 		panic(err)
 	}
-	for _, row := range values {
-		for _, cell := range row {
-			fmt.Printf("%v ", cell)
-		}
-		fmt.Println()
+	for _, v := range values {
+		fmt.Println(v)
 	}
+}
+
+func (s *SheetClient) GenerateHash(sheet string) (string, error) {
+	fmt.Println(s.spreadsheetID)
+	values, err := s.srv.Spreadsheets.Values.Get(os.Getenv("SPREAD_SHEET_ID"), fmt.Sprintf("'%s'!A:B", sheet)).Do()
+	if err != nil {
+		return "", err
+	}
+
+	var hash string
+	for _, row := range values.Values {
+		hash += row[0].(string)
+	}
+
+	h := sha256.Sum256([]byte(hash))
+	hash = hex.EncodeToString(h[:])
+	return hash, nil
 }
