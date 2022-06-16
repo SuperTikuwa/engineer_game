@@ -7,6 +7,7 @@ import (
 
 	"github.com/SuperTikuwa/matching_game/models"
 	"github.com/SuperTikuwa/matching_game/sheetclient"
+	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -28,6 +29,12 @@ func GormConnect() *gorm.DB {
 	}
 
 	return db
+}
+
+func loadEnv() {
+	if err := godotenv.Load("./.env"); err != nil {
+		log.Fatal("Error loading .env file")
+	}
 }
 
 func closeDB(db *gorm.DB) {
@@ -110,6 +117,8 @@ func init() {
 
 // seed words table
 func init() {
+	loadEnv()
+
 	db := GormConnect()
 	defer closeDB(db)
 
@@ -129,12 +138,26 @@ func init() {
 			log.Fatal(err, "Cannot generate hash")
 		}
 
-		if hash.DifficultyID == 1 && hash.Hash != h {
+		if hash.Hash != h {
+			// if err := db.Model(&models.Word{}).Delete("difficulty_id = ?", hash.DifficultyID).Error; err != nil {
+			// 	log.Fatal(err, "Cannot delete words")
+			// }
+
 			hash.Hash = h
 			if err := db.Save(&hash).Error; err != nil {
 				log.Fatal(err, "Cannot update hash")
 			}
 
+			sheet := sheetclient.IdToString(int(hash.ID))
+
+			words, err := sc.Get(sheet)
+			if err != nil {
+				log.Fatal(err, "Cannot get words")
+			}
+
+			if err := db.Create(&words).Error; err != nil {
+				log.Fatal(err, "Cannot seed database: word")
+			}
 		}
 	}
 }

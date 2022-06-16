@@ -23,6 +23,32 @@ type SheetClient struct {
 	spreadsheetID string
 }
 
+func IdToString(id int) string {
+	switch id {
+	case 1:
+		return STUDENT
+	case 2:
+		return NON_ENGINEER
+	case 3:
+		return ENGINEER
+	default:
+		return ""
+	}
+}
+
+func StringToID(s string) int {
+	switch s {
+	case STUDENT:
+		return 1
+	case NON_ENGINEER:
+		return 2
+	case ENGINEER:
+		return 3
+	default:
+		return 0
+	}
+}
+
 func NewSheetClient(ctx context.Context, spreadsheetID string) (*SheetClient, error) {
 	credential := option.WithCredentialsFile("secret.json")
 
@@ -36,8 +62,8 @@ func NewSheetClient(ctx context.Context, spreadsheetID string) (*SheetClient, er
 	}, nil
 }
 
-func (s *SheetClient) Get(range_ string) ([]models.Word, error) {
-	resp, err := s.srv.Spreadsheets.Values.Get(s.spreadsheetID, range_).Do()
+func (s *SheetClient) Get(sheet string) ([]models.Word, error) {
+	resp, err := s.srv.Spreadsheets.Values.Get(s.spreadsheetID, fmt.Sprintf("'%s'!A:B", sheet)).Do()
 	if err != nil {
 		return nil, err
 	}
@@ -47,10 +73,13 @@ func (s *SheetClient) Get(range_ string) ([]models.Word, error) {
 		if i == 0 {
 			continue
 		}
-		word := models.Word{
-			Word:    row[0].(string),
-			Meaning: row[1].(string),
+
+		word := models.Word{}
+		word.Word = row[0].(string)
+		if len(row) == 2 {
+			word.Meaning = row[1].(string)
 		}
+		word.DifficultyID = uint(StringToID(sheet))
 
 		words = append(words, word)
 	}
@@ -58,18 +87,7 @@ func (s *SheetClient) Get(range_ string) ([]models.Word, error) {
 	return words, nil
 }
 
-func (s *SheetClient) PrintValue(sheet string) {
-	values, err := s.Get(fmt.Sprintf("'%s'!A:B", sheet))
-	if err != nil {
-		panic(err)
-	}
-	for _, v := range values {
-		fmt.Println(v)
-	}
-}
-
 func (s *SheetClient) GenerateHash(sheet string) (string, error) {
-	fmt.Println(s.spreadsheetID)
 	values, err := s.srv.Spreadsheets.Values.Get(os.Getenv("SPREAD_SHEET_ID"), fmt.Sprintf("'%s'!A:B", sheet)).Do()
 	if err != nil {
 		return "", err
