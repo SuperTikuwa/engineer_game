@@ -3,8 +3,11 @@ module github.com/SuperTikuwa/matching_game
 go 1.17
 
 require (
+	github.com/joho/godotenv v1.4.0
 	golang.org/x/oauth2 v0.0.0-20220524215830-622c5d57e401
 	google.golang.org/api v0.81.0
+	gorm.io/driver/mysql v1.3.3
+	gorm.io/gorm v1.23.5
 )
 
 require (
@@ -23,6 +26,4 @@ require (
 	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
 	google.golang.org/grpc v1.46.2 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
-	gorm.io/driver/mysql v1.3.3 // indirect
-	gorm.io/gorm v1.23.5 // indirect
 )

@@ -1,17 +1,16 @@
 package main
 
 import (
-	"context"
-	"os"
+	"net/http"
 
-	"github.com/SuperTikuwa/matching_game/sheetclient"
+	"github.com/SuperTikuwa/matching_game/handler"
 )
 
+func init() {
+
+}
+
 func main() {
-	ctx := context.Background()
-	client, err := sheetclient.NewSheetClient(ctx, os.Getenv("SPREAD_SHEET_ID"))
-	if err != nil {
-		panic(err)
-	}
-	client.PrintValue()
+	http.HandleFunc("/words", handler.WordsGetHandler)
+	http.ListenAndServe(":80", nil)
 }

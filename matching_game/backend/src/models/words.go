@@ -2,16 +2,20 @@ package models
 
 import "gorm.io/gorm"
 
-type Words struct {
+type Word struct {
 	gorm.Model
-	ID         int        `gorm:"primary_key"`
-	Word       string     `gorm:"not null"`
-	Meaning    string     `gorm:"not null"`
-	Difficulty Difficulty `gorm:"not null"`
+	Word         string `gorm:"not null"`
+	Meaning      string `gorm:"not null"`
+	DifficultyID uint   `gorm:"not null"`
 }
 
 type Difficulty struct {
 	gorm.Model
-	ID         int    `gorm:"primary_key"`
 	Difficulty string `gorm:"not null"`
+}
+
+type Hash struct {
+	gorm.Model
+	Hash         string `gorm:"not null"`
+	DifficultyID uint   `gorm:"not null"`
 }

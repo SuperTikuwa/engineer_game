@@ -12,13 +12,26 @@ const (
 	ENGINEER     = "engineer"
 )
 
-func SelectWords(mode string) {
+func SelectWords(mode string) ([]models.Word, error) {
 	db := GormConnect()
 	defer closeDB(db)
 
-	words := []models.Words{}
-	db.Model(&models.Words{}).Order("NEWID()").Limit(10).Find(&words)
+	var difficultyID int
+	switch mode {
+	case STUDENT:
+		difficultyID = 1
+	case NON_ENGINEER:
+		difficultyID = 2
+	case ENGINEER:
+		difficultyID = 3
+	default:
+		return nil, fmt.Errorf("invalid mode: %s", mode)
+	}
 
-	fmt.Println(words)
+	words := []models.Word{}
+	if db.Model(&models.Word{}).Where("difficulty_id=?", difficultyID).Order("RAND()").Limit(10).Find(&words).Error != nil {
+		return nil, fmt.Errorf("Cannot select database: word")
+	}
 
+	return words, nil
 }

@@ -2,11 +2,20 @@ package sheetclient
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
-	"io/ioutil"
+	"os"
 
-	google "golang.org/x/oauth2/google"
+	"github.com/SuperTikuwa/matching_game/models"
+	"google.golang.org/api/option"
 	sheets "google.golang.org/api/sheets/v4"
+)
+
+const (
+	STUDENT      = "就活生向け"
+	NON_ENGINEER = "非エンジニア職種向け"
+	ENGINEER     = "エンジニア目指す子"
 )
 
 type SheetClient struct {
@@ -14,17 +23,36 @@ type SheetClient struct {
 	spreadsheetID string
 }
 
-func NewSheetClient(ctx context.Context, spreadsheetID string) (*SheetClient, error) {
-	b, err := ioutil.ReadFile("secret.json")
-	if err != nil {
-		return nil, err
+func IdToString(id int) string {
+	switch id {
+	case 1:
+		return STUDENT
+	case 2:
+		return NON_ENGINEER
+	case 3:
+		return ENGINEER
+	default:
+		return ""
 	}
+}
 
-	jwt, err := google.JWTConfigFromJSON(b, "https://www.googleapis.com/auth/spreadsheets")
-	if err != nil {
-		return nil, err
+func StringToID(s string) int {
+	switch s {
+	case STUDENT:
+		return 1
+	case NON_ENGINEER:
+		return 2
+	case ENGINEER:
+		return 3
+	default:
+		return 0
 	}
-	srv, err := sheets.New(jwt.Client(ctx))
+}
+
+func NewSheetClient(ctx context.Context, spreadsheetID string) (*SheetClient, error) {
+	credential := option.WithCredentialsFile("secret.json")
+
+	srv, err := sheets.NewService(ctx, credential)
 	if err != nil {
 		return nil, err
 	}
@@ -34,23 +62,43 @@ func NewSheetClient(ctx context.Context, spreadsheetID string) (*SheetClient, er
 	}, nil
 }
 
-func (s *SheetClient) Get(range_ string) ([][]interface{}, error) {
-	resp, err := s.srv.Spreadsheets.Values.Get(s.spreadsheetID, range_).Do()
+func (s *SheetClient) Get(sheet string) ([]models.Word, error) {
+	resp, err := s.srv.Spreadsheets.Values.Get(s.spreadsheetID, fmt.Sprintf("'%s'!A:B", sheet)).Do()
 	if err != nil {
 		return nil, err
 	}
-	return resp.Values, nil
+
+	var words []models.Word
+	for i, row := range resp.Values {
+		if i == 0 {
+			continue
+		}
+
+		word := models.Word{}
+		word.Word = row[0].(string)
+		if len(row) == 2 {
+			word.Meaning = row[1].(string)
+		}
+		word.DifficultyID = uint(StringToID(sheet))
+
+		words = append(words, word)
+	}
+
+	return words, nil
 }
 
-func (s *SheetClient) PrintValue() {
-	values, err := s.Get("'就活生向け'!A:B")
+func (s *SheetClient) GenerateHash(sheet string) (string, error) {
+	values, err := s.srv.Spreadsheets.Values.Get(os.Getenv("SPREAD_SHEET_ID"), fmt.Sprintf("'%s'!A:B", sheet)).Do()
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	for _, row := range values {
-		for _, cell := range row {
-			fmt.Printf("%v ", cell)
-		}
-		fmt.Println()
+
+	var hash string
+	for _, row := range values.Values {
+		hash += row[0].(string)
 	}
+
+	h := sha256.Sum256([]byte(hash))
+	hash = hex.EncodeToString(h[:])
+	return hash, nil
 }
