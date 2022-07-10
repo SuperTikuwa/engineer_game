@@ -51,3 +51,14 @@ func JoinGame(gameID, playerID string) {
 		log.Println(err)
 	}
 }
+
+func GetGames() []string {
+	conn := RedisConnect()
+	games, err := redis.Strings(conn.Do("KEYS", "*"))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return games
+}

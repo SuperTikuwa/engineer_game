@@ -10,6 +10,23 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func GameGetHandler(w http.ResponseWriter, r *http.Request) {
+	g := redisoperation.GetGames()
+
+	games := struct {
+		Games []string `json:"games"`
+	}{
+		g,
+	}
+
+	json, err := json.Marshal(games)
+	if err != nil {
+		log.Println(err)
+	}
+
+	fmt.Fprint(w, string(json))
+}
+
 func GamePostHandler(w http.ResponseWriter, r *http.Request) {
 	gameID := redisoperation.GenerateGameID()
 
