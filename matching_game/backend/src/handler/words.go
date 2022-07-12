@@ -10,9 +10,29 @@ import (
 )
 
 func WordsGetHandler(w http.ResponseWriter, r *http.Request) {
-	words, err := dboperation.SelectWords(dboperation.STUDENT)
+	m := r.URL.Query().Get("mode")
+	gameID := r.URL.Query().Get("gameID")
+	mode := ""
+	switch m {
+	case "0":
+		mode = dboperation.STUDENT
+	case "1":
+		mode = dboperation.NON_ENGINEER
+	case "2":
+		mode = dboperation.ENGINEER
+	default:
+		log.Printf("invalid mode: %s", m)
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, `{"error":"invalid mode"}`)
+		return
+	}
+
+	words, err := dboperation.SelectWords(mode, gameID)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("cannot select database: word")
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, `{"error":"`+err.Error()+`"}`)
+		return
 	}
 
 	res := []models.WordGetResponse{}

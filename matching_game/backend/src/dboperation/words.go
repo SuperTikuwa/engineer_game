@@ -2,6 +2,7 @@ package dboperation
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/SuperTikuwa/matching_game/models"
 )
@@ -12,7 +13,7 @@ const (
 	ENGINEER     = "engineer"
 )
 
-func SelectWords(mode string) ([]models.Word, error) {
+func SelectWords(mode, gameID string) ([]models.Word, error) {
 	db := GormConnect()
 	defer closeDB(db)
 
@@ -28,9 +29,15 @@ func SelectWords(mode string) ([]models.Word, error) {
 		return nil, fmt.Errorf("invalid mode: %s", mode)
 	}
 
+	_, err := strconv.Atoi(gameID)
+
+	if gameID == "" || len(gameID) != 10 || err != nil {
+		return nil, fmt.Errorf("invalid gameID: %s", gameID)
+	}
+
 	words := []models.Word{}
-	if db.Model(&models.Word{}).Where("difficulty_id=?", difficultyID).Order("RAND()").Limit(10).Find(&words).Error != nil {
-		return nil, fmt.Errorf("Cannot select database: word")
+	if db.Model(&models.Word{}).Where("difficulty_id=?", difficultyID).Order("RAND("+gameID+")").Limit(10).Find(&words).Error != nil {
+		return nil, fmt.Errorf("cannot select database: word")
 	}
 
 	return words, nil
