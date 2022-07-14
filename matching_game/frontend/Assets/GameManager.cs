@@ -8,11 +8,13 @@ public class GameManager : MonoBehaviour
     private Camera camera_object; //カメラを取得
     private RaycastHit hit; //レイキャストが当たったものを取得する入れ物
 
+    [SerializeField]
+    private GameObject card;
     // Start is called before the first frame update
     void Start()
     {
         for (int i = 1; i <= 16; i++) {
-
+            Instantiate(card, new Vector3(i*10, i*10, 0), Quaternion.identity);
         }
     }
 

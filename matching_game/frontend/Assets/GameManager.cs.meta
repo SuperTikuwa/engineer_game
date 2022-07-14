@@ -3,7 +3,9 @@ guid: bd95cc0b8341d468bad1279444344107
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - camera_object: {instanceID: 0}
+  - card: {fileID: 7968451166177111521, guid: 57ef57dfb92b841ea98f33573f07a78b, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
