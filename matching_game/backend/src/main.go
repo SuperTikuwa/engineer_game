@@ -17,5 +17,6 @@ func main() {
 	r.HandleFunc("/words", handler.WordsGetHandler).Methods("GET").Queries("mode", "{mode:[0-2]}", "gameID", "{gameID}")
 
 	r.HandleFunc("/games", handler.GamePostHandler).Methods("POST")
+	r.HandleFunc("/games/{gameID}", handler.GameSocket).Methods("GET")
 	http.ListenAndServe(":80", r)
 }
